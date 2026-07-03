@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>浪潮SV通用认证刷题宝典</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui}
+body{background:#f5f7fa;color:#333;padding:12px;max-width:1200px;margin:0 auto}
+.header{background:#1677ff;color:#fff;padding:16px;border-radius:10px;margin-bottom:16px}
+.header h1{font-size:22px;margin-bottom:6px}
+.header p{opacity:0.9;font-size:14px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.nav button{padding:10px 14px;border:none;border-radius:8px;background:#e8f3ff;color:#1677ff;cursor:pointer;font-size:14px;white-space:nowrap}
+.nav button.active{background:#1677ff;color:#fff}
+.stats{background:#fff;padding:10px;border-radius:8px;margin-bottom:14px;font-size:14px;color:#555}
+.box{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 10px #e2e8f0}
+.question-title{font-size:16px;font-weight:500;margin-bottom:16px;line-height:1.7}
+.opt-item{padding:12px 14px;border:1px #e5e7eb solid;border-radius:8px;margin:10px 0;cursor:pointer;transition:0.2s}
+.opt-item:hover{border-color:#1677ff;background:#f8fbff}
+.opt-select{background:#e8f3ff;border:#1677ff}
+.opt-right{background:#e6ffe6;border:#00b42a}
+.opt-wrong{background:#fff2f0;border:#f53f3f}
+.answer-area{margin-top:20px;padding:14px;background:#f0f7ff;border-radius:8px;display:none}
+.answer-area h4{color:#1677ff;margin-bottom:8px}
+.answer-area p{line-height:1.6;color:#333}
+.btns{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}
+.btns button{padding:11px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px}
+.btn-sub{background:#1677ff;color:#fff}
+.btn-next{background:#eeeeee;color:#333}
+.btn-collect{background:#fff0b3;color:#b37000}
+.hide{display:none !important}
+.tip{margin-top:10px;color:#888;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>浪潮SV通用认证刷题宝典</h1>
+<p>题库：规范红线｜技术理论｜服务政策｜实施交付 | 自动存错题/收藏</p>
+</div>
+<div class="nav">
+<button class="active" data-filter="all">全部题目</button>
+<button data-filter="single">单选题</button>
+<button data-filter="multi">多选题</button>
+<button data-filter="judge">判断题</button>
+<button onclick="openWrongBook()">错题本</button>
+<button onclick="mockExam()">模拟测试</button>
+</div>
+<div class="stats">
+当前进度：<span id="curNum">0</span> / <span id="totalNum">0</span> ｜累计正确率：<span id="rate">0%</span>
+</div>
+<div class="box" id="qBox">
+<div class="question-title" id="qTitle"></div>
+<div id="optWrap"></div>
+<div class="answer-area" id="ansBox">
+<h4>标准答案：<span id="trueAns"></span></h4>
+<p id="explain"></p>
+</div>
+<div class="btns">
+<button class="btn-sub" id="submitBtn">提交答案</button>
+<button class="btn-next" id="nextBtn">下一题</button>
+<button class="btn-collect" onclick="collectQ()">收藏本题</button>
+</div>
+<div class="tip">作答记录、错题、收藏自动保存在本地浏览器，清除缓存会丢失</div>
+</div>
+
+<script>
+// 完整修复题库数组，删除重复字段、补全闭合
+const questionList = [
+// ====================== 文档1 SV通用认证-公共课3-规范红线 单选 ======================
+{"subject":"公共课3-规范红线","type":"single","title":"【字节】需要对临时设备或者下架维修的设备进行加电测试，应该选用哪种供电。","options":["A. 使用机柜PDU供电","B. 使用排插从别的机柜供电","C. 使用墙电","D. 以上方式都可以"],"answer":"C","explain":"对临时或下架维修的设备进行加电测试时，应优先选择稳定且规范的墙电供电，机柜PDU严禁给临时设备供电。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】对于关机、重启等操作，下述说法错误的是：","options":["A. 关机、重启等操作必须在客户允许后才能操作","B. 维修过程中关机、重启等操作不必二次核对","C. 特殊客户要求关机、重启需由现场运维操作","D. 严禁工时或损坏操作"],"answer":"B","explain":"维修执行关机、重启关键操作前，必须二次核对设备SN、维修标签，防止误操作业务设备。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】下面哪项不属于操作不规范动作：","options":["A. 提升不及时","B. 测试成绩都不彻底","C. 盲目更换部件","D. 软能力不足"],"answer":"D","explain":"提升不及时、测试不彻底、盲目换件都属于流程操作违规；软能力不足是个人综合能力问题，不属于操作动作不规范。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】服务器维修期间涉及的内容，如下说法正确的是：","options":["A. 高级工程师处理工作时，可以不经要求进行升级","B. 告知故障，重启后机器恢复正常，最后产线通知使用流程即可","C. 更换硬盘时发现新硬盘的容量大于故障盘的容量，可以直接进行更换","D. 严禁操作客户禁止的内容"],"answer":"D","explain":"所有维修操作必须遵守客户禁令，升级、换硬盘都需要授权与兼容性校验，故障恢复也要走完完整维修流程。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】下述关于维修过程中的安全规范描述错误的是：","options":["A. 严禁在机房的任何区域内吸烟，饮水饮食、未经正式授权严禁拍照、录像","B. 机房维修时，设备临时清理时使用机柜 UPS 电源（PDU）","C. 现场维修如没有明确思路，需及时提升技术leader或资深技术支持","D. 若现场发生意外事故，务必在第一时间通知技术leader和项目总指挥人员"],"answer":"B","explain":"临时设备、维修设备禁止接入机柜PDU/UPS，必须使用专用维修墙插供电。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】以下说法正确的是：","options":["A. 确保操作后，系统和业务能够恢复至正常运行状态","B. 工程师在进行换盘操作时，可以边进行交谈，边进行换盘操作","C. 现场思路不清晰时可以尝试操作不用提升","D. 工程师可以偶尔不佩戴防静电手环进行服务"],"answer":"A","explain":"硬件操作必须专注；思路不清禁止盲目操作；拆机全程强制佩戴防静电手环。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】以下属于S1黑事件的是：","options":["A. 在客户端没有违规影响，通过日常监控或其他业务团队反馈工程师存在违反规则的行为","B. 因操作不当导致的设备意外宕机、网络中断、数据丢失等情况对客户业务连续性产生影响或对关键指标产生影响的事件","C. 工程师个人维修不彻底，导致故障复现，引发客户投诉","D. 故障点"],"answer":"B","explain":"S1黑事件定义：操作失误造成业务中断、数据丢失，直接影响客户业务运行的严重事故。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】维修过程中针对关键问题，下述说法中错误的是：","options":["A. 关键问题需要明确的操作是否合规","B. 从前面规定的情况来看，不需要确认和重新定义，但要求不对称或以正确处理的问题，直接影响后续问题","C. 尽量使用相关知识进行实践"],"answer":"B","explain":"处理关键风险问题必须先确认、定义问题，禁止模糊处理，否则会衍生更大故障。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【字节】关于字节机房对防静电措施说法正确的是：","options":["A. 必须穿防静电工衣","B. 穿防静电鞋套即可无需佩戴防静电手环","C. 必须佩戴防静电手环","D. 不拆机无需佩戴手环"],"answer":"C","explain":"字节机房硬件操作强制佩戴防静电手环，仅工衣/鞋套不足以防护静电损坏元器件。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】现场服务器严格执行三授权，以下哪项属于三授权：","options":["A. 技术授权","B. 流程授权","C. 系统授权"],"answer":"A","explain":"现场三授权：客户授权、管理授权、技术授权。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】现场服务需严格执行六禁令，下述不属于六禁令的是：","options":["A. 严禁未经授权，私自使用PDU电源","B. 严禁在非授权时段操作（含远程操作）报修设备或其他正常运行设备","C. 严禁使用非浪潮信息发布和客户明令限制的服务软件版本（含工具）"],"answer":"A","explain":"六禁令不含私自使用PDU这条，其余B、C均属于六禁令内容。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【字节】字节机房驻场人员在对故障服务器进行相关下电、线缆插拔、插接键盘显示器等动作的时，厂商人员应该做的是：","options":["A. 准备自己所用的备件","B. 签署服务承诺书","C. 在机房外等待","D. 全程关注和核对驻场运维人员操作是否正确操作主机"],"answer":"D","explain":"客户运维执行硬件操作时，我方工程师必须全程旁站监督，及时制止误操作。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】现场操作设备前务必按五星素标记机器，以下哪项不属于五要素。","options":["A. 机器高度","B. U位号","C. 机柜号","D. 维修标签"],"answer":"A","explain":"设备标记五要素：机柜号、U位、UID灯、维修标签、设备SN，不含机器高度。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】现场服务需严格执行三授权，以下哪项不属于三授权。","options":["A. 客户授权","B. 管理授权","C. 运维授权"],"answer":"C","explain":"三授权：客户、管理、技术，无运维授权。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】下列关于固件刷新注意事项说法错误的是：","options":["A. 确认是否是定制化","B. 刷新前备份或记录原固件信息","C. 刷新后核对信息是否正确","D. 直接将固件刷成最新版本"],"answer":"D","explain":"固件不能盲目刷最新版，需确认机型、客户定制、硬件兼容性后方可升级。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【字节】字节机房，在服务器上拔插U盘操作的责任方是谁。","options":["A. 机房运维","B. 工程师","C. 以上都是"],"answer":"A","explain":"字节机房所有U盘、线缆、开关机操作仅允许客户运维执行，厂商工程师禁止操作。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】不属于硬件DOA判断通用原则的是：","options":["A. 更换前发现元器件物理损坏，如插槽松动、针脚弯曲、金手指破损等，判为DOA","B. 在服务完成5个工作日内，更换部件故障或性能异常，判为DOA","C. 在服务过程中，因工程师误操作，导致部件产生物损的，则判断为部件DOA"],"answer":"C","explain":"工程师人为损坏备件不属于原厂DOA，不能走DOA流程。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】以下哪些属于低级失误：","options":["A. 误关机、误重启、无停机权限误停机","B. 维修不彻底","C. 携带错误备件","D. 无维修思路"],"answer":"A","explain":"无授权开关机、误重启属于基础流程低级操作失误。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】维修前粘贴维修标签需核对机器SN，下述操作中错误的是：","options":["A. 逐位数字与工单信息仔细比对","B. 点亮UID灯后再到机器后方粘贴维修标识","C. 核对机器SN只需要核对前4位和后3位数字即可，没必要全部核对"],"answer":"C","explain":"SN必须完整逐位比对，截取部分数字极易混淆同机房多台设备。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【字节】工程师收到硬盘故障的工单，热线处理建议多次频繁报错要排查链路时工程师应该怎么做。","options":["A. 不管热线建议直接更换故障盘离开","B. 飞书联系客户申请停机排查链路，客户同意后再停机排查","C. 现场直接停机操作","D. 飞书给客户留言要停机排查后便可操作,不管客户是否同意"],"answer":"B","explain":"停机类操作必须取得客户明确书面/线上授权才能执行。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】硬盘槽位确定不准容易引发换错盘，数据业务受损等事故，下述关于硬盘槽位确定方法说法错误的是：","options":["A. 依据硬盘红灯直接换盘","B. BMC下观察SN及对应槽位","C. 通过客户点灯确认","D. 协调停机比对硬盘SN确认"],"answer":"A","explain":"仅依靠故障红灯换盘风险极高，存在指示灯误报、多块故障盘场景，必须配合BMC/UID/SN确认。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】关于更换主板的操作下述哪个说法不正确：","options":["A. 需要明确服务器是否为定制化，确认是否需要刷新定制化固件","B. 刷新完固件后，必须检查固件是否刷新正常，包括FRU","C. 某些客户定制化机型，除了刷新BIOS/BMC，可能还需要刷新SAS/Raid版本","D. 更换主板后无法启动系统，优先让客户检查系统"],"answer":"D","explain":"更换主板后无法开机，优先排查硬件、固件、背板，工程师先排查硬件层面问题。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】涉及数据风险问题，错误的做法是：","options":["A. 动手前一定要和客户沟通了解数据重要性","B. 引导客户做好备份，并沟通签署免责声明","C. 只要按照技术规范操作即可，没必要与客户沟通数据风险和澄清免责"],"answer":"C","explain":"所有硬盘、阵列、停机操作必须告知客户数据风险并签署免责。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】操作员做关键风险动作时，安全员需要做的动作是：","options":["A. 辅助找备件","B. 协助提升","C. 紧盯操作员的动作，做好确认放权","D. 与运维聊天","E. 维修其他报修机器"],"answer":"C","explain":"安全员核心职责：全程监督风险操作，把控安全，禁止参与维修操作。"},
+{"subject":"公共课3-规范红线","type":"single","title":"【通用】下述文字安全员职责说法错误的是：","options":["A. 可以帮助上下架","B. 可以操作机器","C. 对安全事故负主要责任","D. 需描述并记录操作员存在的问题"],"answer":"B","explain":"安全员与操作员职责分离，安全员禁止操作任何设备，仅监督。"},
+// ====================== 文档1 多选 ======================
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】遇到高机位维护、上架设备，以下做法中哪些是正确的：","options":["A. 使用登高凳","B. 协调同事一同完成上架","C. 自己勉强继续上架","D. 踩踏其他服务器进行上架"],"answer":"AB","explain":"高机位必须使用登高工具、双人协作，严禁踩踏服务器、单人硬扛。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【阿里】以下关于机房IT带维和工程师职责界面，描述正确的是：","options":["A. 主机关机、重启由机房人员操作","B. 故障服务器开机由工程师操作","C. 核对维护设备信息是否准确由机房人员操作","D. 故障部件更换、插拔由工程师操作"],"answer":"AD","explain":"阿里机房开关机、插拔线缆全部运维操作，硬件更换由工程师执行，设备信息双方共同核对。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】遇到在机房需要使用客户电源的情况，说法正确的有哪些？","options":["A. 严禁临时设备或者下架维修的设备使用机柜 PDU 加电","B. 禁止将笔记本、手机、停机维修设备等临时电子设备电源接入机柜-PDU","C. 可以连接服务器USB口给手机充电","D. 随意调整PDU电源线接口位置"],"answer":"AB","explain":"USB充电、私自改动PDU接线均属于机房违规行为。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】下列关于客户授权的理解描述不正确的是：","options":["A. 上门前沟通可停机即获得了停机授权","B. 拔管理口网线无需客户授权","C. 发现阵列异常可直接清除重建","D. 上次维修已获得系统密码，本次可直接使用进入系统"],"answer":"ABCD","explain":"所有选项全部错误，每一次操作都需要实时、单独客户授权，历史授权失效。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【字节】字节机房规定严禁私自对设备外界线缆或外设拔插，包含哪些拔插项：","options":["A. 电源线","B. 网线","C. 光纤","D. 液冷连接线缆","E. 键盘和显示器","F. U盘"],"answer":"ABCDEF","explain":"字节机房任何线缆、外设插拔全部禁止厂商工程师操作。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】以下哪些操作，是必须由运维操作，在任何情况下，严禁工程师操作的。","options":["A. 开关机","B. 拔插线缆","C. 拔插U盘","D. 拔插连接工程师笔记本的网线"],"answer":"ABCD","explain":"在线服务器所有物理插拔、电源操作均归属客户运维。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【字节】进入字节机房操作设备时应遵守的事项有：","options":["A. 禁止操作工单范围外的机器，非停机类维护禁止报修本机其他故障，如需操作需要字节确认","B. 服务器上下架轻拿轻放，严禁暴力操作","C. 可将服务器与服务器之间通过线缆直连","D. 禁止触碰任何非授权机器","E. 禁止触碰运营基础设施","F. 高机位必须使用登高凳"],"answer":"ABDEF","explain":"服务器之间私自线缆直连违规，会造成网络环路故障。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】目前服务前需要签署服务承诺书的客户有：","options":["A. 阿里","B. 美团","C. 腾讯","D. 字节"],"answer":"ABCD","explain":"头部互联网机房上门维修统一要求签署服务承诺书。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】以下关于客户入室规范说法正确有哪些：","options":["A. 着装合规，拆机必须佩戴防静电手环","B. 双人工单+维修工单，安检登记入场","C. 机房表单如实填写，信息一致","D. 不私自触碰、调整客户设备配置","E. 人证统一，禁止借用他人证件","F. 机房内嬉戏打闹随意丢弃杂物"],"answer":"ABCDE","explain":"机房禁止打闹、乱扔垃圾。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】关于双岗服务场景，安全员的职责包括哪些内容。","options":["A. 拆装操作者","B. 现场服务操作监督者","C. 技术方案执行","D. 风险动作把关"],"answer":"BD","explain":"安全员只监督，不参与拆装、维修执行。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】以下属于六禁令的是：","options":["A. 严禁未经客户授权，擅自操作客户设备","B. 严禁在非授权时段操作设备","C. 严禁使用非官方/客户禁止工具版本","D. 严禁操作客户禁止方案盲目换件","E. 维修后必须客户验证方可离场","F. 现场事故第一时间上报，禁止隐瞒"],"answer":"ABCEF","explain":"六禁令无D这条描述。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【字节】字节服务，开始维修前需要做哪些安全操作：","options":["A. 机器前置粘贴维修标签","B. 机器后置粘贴维修标签","C. 点亮待维修机器UID灯","D. 在线操作前二次核对设备位置"],"answer":"ABCD","explain":"字节维修前四步安全标识动作，缺一不可。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】以下关于客户信息安全说法正确有哪些：","options":["A. 禁止泄露机房、设备、客户联系人信息","B. 禁止社交平台发布维护文档、基线","C. 备件不可私自转售流入二手市场","D. 无授权禁止拍照机房服务器","E. 未经审批禁止携带移动存储进出机房"],"answer":"ABCDE","explain":"全部属于客户信息保密红线要求。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】现场维修更换备件，工程师必须核对换上换下备件信息：","options":["A. 厂商","B. PN","C. 容量（存储备件）"],"answer":"BC","explain":"更换备件强制核对PN号，硬盘核对容量，厂商仅客户特殊要求才校验。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】飞检员除现场规范检查，还需要做什么：","options":["A. 与运维沟通工程师表现","B. 挖掘技术短板","C. 填写留存飞检记录表","D. 识别反馈规范未覆盖隐患"],"answer":"CD","explain":"沟通客户、培训短板不属于飞检核心工作。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【字节】字节机房内下述哪些动作是不允许做的：","options":["A. 穿拖鞋进入机房","B. 包间内不能游戏娱乐","C. 包间外嬉戏打闹","D. 随意点灭非维修机器UID灯"],"answer":"ACD","explain":"B是正确规范，不属于禁止行为。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【阿里】关于工程师与驻场运维职责划分，说法正确的是：","options":["A. 关机、重启、拔线务必由运维来做","B. 运维贴维修贴定位机器时工程师旁边协助","C. 可以协助运维做重启操作","D. 人手不足让运维拆装机器"],"answer":"AB","explain":"工程师禁止协助开关机、拆装客户服务器。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】安全员需要监督确认的高风险动作：","options":["A. 软硬关机、重启","B. 阵列增删重建","C. 插拔线缆U盘硬盘","D. 内部提升沟通","E. 备件新旧核对"],"answer":"ABCE","explain":"内部沟通提升不属于设备操作风险动作。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】属于确认机器五要素的是：","options":["A. 机房号","B. 机柜号","C. U位","D. UID灯","E. 维修标签"],"answer":"BCDE","explain":"机房号范围过大，不属于单台设备定位五要素。"},
+{"subject":"公共课3-规范红线","type":"multi","title":"【通用】入场机房维修通用规范：","options":["A. 严格按工单计划操作，不私自改动配置","B. 不带食品、饮品、危险品进机房","C. 维修前核对设备、备件、安全措施","D. 操作不影响其他在线设备"],"answer":"ABCD","explain":"四条全部为机房入场基础规范。"},
+// ====================== 文档1 判断 ======================
+{"subject":"公共课3-规范红线","type":"judge","title":"【字节】维修字节服务器时，字节固定资产编号也是必须核对的要素。","options":["A.正确","B.错误"],"answer":"A","explain":"字节资产管控严格，维修必须核对固定资产编号、SN、机柜U位。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【字节】字节工单维修过程中，需要使用U盘，工程师可以自行在服务器上进行U盘的拔插。","options":["A.正确","B.错误"],"answer":"B","explain":"U盘插拔仅客户运维操作。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】工程师在客户机房可以随意打开电源柜进行查看及操作任何电源开关。","options":["A.正确","B.错误"],"answer":"B","explain":"电源柜属于机房核心基础设施，无客户书面授权严禁触碰。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】售后维修服务前需要按五要素确认设备位置，在设备前后均需粘贴维修标识。","options":["A.正确","B.错误"],"answer":"A","explain":"前后双标签+UID灯定位，防止误操作邻柜设备。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】现场服务过程中，如需收集客户设备日志，需提前征得客户同意，并在服务记录单上让客户签字。","options":["A.正确","B.错误"],"answer":"A","explain":"日志包含客户业务数据，必须授权签字确认。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】服务器维修期间，只要有工单可以不经过客户再次确认就可以关机、重启操作。","options":["A.正确","B.错误"],"answer":"B","explain":"工单仅入场凭证，每次停机重启都需要实时单独授权。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】服务器维修期间，可以不经过客户允许通过单用户进到服务器系统。","options":["A.正确","B.错误"],"answer":"B","explain":"任何方式进入操作系统都需要客户授权。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【字节】更换主板后，可以使用电脑上留存的同机型固件做刷新。","options":["A.正确","B.错误"],"answer":"B","explain":"固件必须使用官方最新/客户指定包，本地留存旧固件禁止使用。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】APP中规范检查模块，需要按照规范上传带水印的维修标签图片。","options":["A.正确","B.错误"],"answer":"A","explain":"带水印照片用于流程追溯，必须上传。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【阿里】更换备件后，工程师必须检查换上备件的固件版本信息、基线等符合客户要求。","options":["A.正确","B.错误"],"answer":"A","explain":"阿里定制机型固件、基线有严格标准，更换备件后校验。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【阿里】现场维修时，涉及电源线拔插、电源模块更换，由运维操作，严禁工程师私自操作。","options":["A.正确","B.错误"],"answer":"A","explain":"阿里电源相关操作全部归属客户运维。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【阿里】上下架机器时，操作时仔细整理周围线缆、魔术软扎带，多人借助工具，谨防误碰光纤。","options":["A.正确","B.错误"],"answer":"A","explain":"光纤易折损，上下架重点防护线缆。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【阿里】更换备件前，核对换上换下备件厂商一致，阿里不允许不同厂商备件混插。","options":["A.正确","B.错误"],"answer":"A","explain":"阿里硬件兼容性管控，同设备备件厂商必须统一。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】无安全员场景，工程师是服务现场安全操作的第一责任人。","options":["A.正确","B.错误"],"answer":"A","explain":"双岗无安全员时，操作工程师全权承担现场安全责任。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【字节】进入字节数据中心仅允许授权范围内操作，禁止触碰工单外设备。","options":["A.正确","B.错误"],"answer":"A","explain":"字节机房权限管控严格，超范围操作属于严重违规。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】临时加电测试设备，可以使用机柜PDU。","options":["A.正确","B.错误"],"answer":"B","explain":"临时设备仅允许墙电供电。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】维修拆机全程必须佩戴防静电手环。","options":["A.正确","B.错误"],"answer":"A","explain":"静电会击穿服务器芯片，拆机强制佩戴。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】固件刷新完成后，必须核对版本是否匹配客户要求。","options":["A.正确","B.错误"],"answer":"A","explain":"刷新后校验是必做流程，避免版本不兼容故障。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】在线机器严禁热插拔非故障电源模块交叉测试。","options":["A.正确","B.错误"],"answer":"A","explain":"在线热插拔非故障电源极易整机掉电，中断业务。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】禁止长按UID灯重启BMC，机型定义不同可能整机重启。","options":["A.正确","B.错误"],"answer":"A","explain":"不同服务器UID长按功能存在差异，禁止用来重启管理芯片。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【阿里】更换存储备件，新旧硬盘容量必须一致，禁止大小混用。","options":["A.正确","B.错误"],"answer":"A","explain":"阿里RAID环境硬盘容量统一，小换大、大换小都会阵列异常。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】故障重启恢复就可以直接离场，无需测试确认。","options":["A.正确","B.错误"],"answer":"B","explain":"故障恢复需要完整业务验证、客户确认后方可结单离场。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】现场突发事故第一时间同步技术leader与总部负责人。","options":["A.正确","B.错误"],"answer":"A","explain":"事故禁止隐瞒，第一时间上报管控风险。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】上门前不熟悉机型可以到客户现场临时拆解学习。","options":["A.正确","B.错误"],"answer":"B","explain":"陌生机型上门前查阅知识库、咨询二线，禁止现场拆机摸索。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】更换主板无法启动优先排查系统问题。","options":["A.正确","B.错误"],"answer":"B","explain":"主板硬件更换后优先硬件、固件排查，系统后置。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【字节】不同服务器之间不允许硬盘交叉测试。","options":["A.正确","B.错误"],"answer":"A","explain":"跨机器硬盘交叉测试存在客户数据泄露、阵列破坏风险。"},
+{"subject":"公共课3-规范红线","type":"judge","title":"【通用】更换备件前完整比对PN、容量、原厂信息，不符禁止更换。","options":["A.正确","B.错误"],"answer":"A","explain":"备件校验是维修前置强制流程。"},
+// ====================== 文档2 技术理论 单选 ======================
+{"subject":"技术理论","type":"single","title":"一块全新1000G机械盘Linux lsblk查看容量为？","options":["A.1000G","B.500G","C.720G","D.930G"],"answer":"D","explain":"厂商1GB=1000MB，系统1GiB=1024MiB，1000G盘系统识别约931G。"},
+{"subject":"技术理论","type":"single","title":"NVMe硬盘使用什么总线信号？","options":["A.SATA","B.SAS","C.PCIe","D.AHCI"],"answer":"C","explain":"NVMe基于PCIe总线协议，SATA/AHCI为传统磁盘协议。"},
+{"subject":"技术理论","type":"single","title":"批量带外开关机使用哪个工具？","options":["A.InManage CLI","B.InService","C.InManage uKits","D.iSmartTool"],"answer":"D","explain":"iSmartTool是带外批量BMC管理工具，支持批量开关机。"},
+{"subject":"技术理论","type":"single","title":"4块500G做RAID5描述错误的是？","options":["A.总容量1.5TB","B.最多坏一块盘不丢数据","C.单独一块盘存放校验","D.单盘掉线阵列Degraded降级"],"answer":"C","explain":"RAID5奇偶校验分布式存所有磁盘，无独立校验盘。"},
+{"subject":"技术理论","type":"single","title":"Linux删除文件命令？","options":["A.mv","B.cp","C.rm","D.mkdir"],"answer":"C","explain":"rm删除；mv移动重命名；cp复制；mkdir创建文件夹。"},
+{"subject":"技术理论","type":"single","title":"普通双路服务器进BIOS快捷键？","options":["A.F8","B.Esc","C.F12","D.Del"],"answer":"D","explain":"浪潮双路服务器通用BIOS快捷键Delete。"},
+{"subject":"技术理论","type":"single","title":"NF5288M5服务器类型？","options":["A.标准计算","B.通用计算","C.存储型","D.GPU加速服务器"],"answer":"D","explain":"NF5288M5多卡GPU机型，用于AI深度学习。"},
+{"subject":"技术理论","type":"single","title":"E5-2600系列CPU适配几路服务器？","options":["A.单路","B.双路","C.四路","D.八路"],"answer":"B","explain":"E5-26xx为双路Xeon处理器。"},
+{"subject":"技术理论","type":"single","title":"以下不属于带外BMC日志？","options":["A.audit审计日志","B.SEL事件日志","C.component硬件清单日志","D.硬盘SMART信息"],"answer":"D","explain":"SMART是硬盘自带信息，不属于BMC带外日志。"},
+{"subject":"技术理论","type":"single","title":"NF5280M6最大内存条数？","options":["A.64","B.128","C.24","D.32"],"answer":"D","explain":"NF5280M6双路主板32个内存插槽。"},
+{"subject":"技术理论","type":"single","title":"单硬盘故障处理错误说法？","options":["A.确认故障槽位","B.排查背板链路","C.换盘后校验阵列状态","D.无需确认故障直接换盘提升效率"],"answer":"D","explain":"硬盘故障必须定位根因，禁止盲目更换备件。"},
+{"subject":"技术理论","type":"single","title":"LSI9361 RAID卡管理工具？","options":["A.sas3ircu","B.MegaCli/Storcli","C.ARCCONF","D.intel工具"],"answer":"B","explain":"MegaCli/Storcli为Broadcom LSI系列标准管理软件。"},
+{"subject":"技术理论","type":"single","title":"InManage uKits主要场景？","options":["A.BMC远程升级","B.BMC配置","C.主板一键整机固件刷新","D.远程日志收集"],"answer":"C","explain":"uKits本地U盘一键刷新整机BIOS/BMC/FRU固件。"},
+{"subject":"技术理论","type":"single","title":"RAID6最大可用容量计算公式？","options":["A.N","B.N-1","C.N-2","D.N-3"],"answer":"C","explain":"RAID6双校验，最多两块盘损坏，可用容量总盘-2。"},
+{"subject":"技术理论","type":"single","title":"InService工具作用？","options":["A.日志收集","B.固件刷新","C.BMC配置","D.日志智能诊断分析"],"answer":"D","explain":"InService上传日志自动解析故障根因。"},
+{"subject":"技术理论","type":"single","title":"uKits固件默认U盘路径？","options":["A.\isums\fwfiles","B.\isums\files","C.\isums\scripts","D.\isums\tools"],"answer":"A","explain":"固件包必须放入fwfiles文件夹才能识别。"},
+{"subject":"技术理论","type":"single","title":"BIOS调节CPU频率选项？","options":["A.Power Management","B.Boot Order","C.Overclocking","D.Device Configuration"],"answer":"C","explain":"超频/睿频设置在Overclocking菜单。"},
+{"subject":"技术理论","type":"single","title":"Linux查看当前目录命令？","options":["A.ls","B.pwd","C.cd","D.vf"],"answer":"B","explain":"pwd打印当前绝对路径；ls列文件；cd切换目录。"},
+{"subject":"技术理论","type":"single","title":"描述错误机型？","options":["A.NF5288M5 GPU","B.NF5280M5通用","C.SA5112M5通用客户机型","D.NF5280M5高于5270M5定位"],"answer":"C","explain":"SA5112M5高密度存储服务器，非通用业务机型。"},
+{"subject":"技术理论","type":"single","title":"Linux新建目录命令？","options":["A.fdisk","B.touch","C.mkdir","D.mount"],"answer":"C","explain":"mkdir创建文件夹；touch新建空文件。"},
+{"subject":"技术理论","type":"single","title":"查询产品资料故障库工具？","options":["A.云诊断","B.诊断云图","C.工单系统","D.知识库"],"answer":"D","explain":"知识库存储全机型手册、典型故障案例。"},
+{"subject":"技术理论","type":"single","title":"CPU散热器螺丝拧紧顺序？","options":["A.1,2,3,4对角依次","B.4,3,2,1","C.2,1,4,3","D.随意"],"answer":"A","explain":"四角对角均匀拧紧，防止CPU压片受力不均。"},
+{"subject":"技术理论","type":"single","title":"硬盘频繁掉线优先校验？","options":["A.数据线","B.坏道","C.硬盘背板","D.主板"],"answer":"C","explain":"多盘同时掉线优先排查背板硬件故障。"},
+{"subject":"技术理论","type":"single","title":"LSI卡业务安全推荐写策略？","options":["A.Write Back","B.Write Through","C.Always Write Back"],"answer":"B","explain":"Write Through直写无缓存，断电无数据丢失风险，业务高安全场景推荐。"},
+{"subject":"技术理论","type":"single","title":"可同时支持SATA与PCIe硬盘接口？","options":["A.U.2","B.SATA","C.SAS","D.M.2"],"answer":"D","explain":"M.2插槽支持SATA协议SSD与NVMe PCIe协议SSD。"},
+{"subject":"技术理论","type":"single","title":"风扇故障错误描述？","options":["A.指示灯判断状态","B.GPU机型风扇高转速","C.CPU主板不会导致风扇报错","D.风道积灰转速异常宕机"],"answer":"C","explain":"CPU过热、主板温控芯片故障都会触发风扇全速告警。"},
+{"subject":"技术理论","type":"single","title":"Linux大于2T磁盘分区工具？","options":["A.fdisk","B.parted","C.mkfs","D.mv"],"answer":"B","explain":"fdisk仅支持2T以内MBR分区，parted支持GPT大容量磁盘。"},
+{"subject":"技术理论","type":"single","title":"RAID1读写性能？","options":["A.高","B.低","C.较高","D.中等"],"answer":"B","explain":"RAID1两份数据同步写入，写入性能减半。"},
+{"subject":"技术理论","type":"single","title":"RAID5最少磁盘数量？","options":["A.1","B.2","C.3","D.4"],"answer":"C","explain":"RAID5至少3块磁盘实现分布式奇偶校验。"},
+{"subject":"技术理论","type":"single","title":"GPU服务器正确描述？","options":["A.算力强大适合AI计算","B.只有GPU服务器能插显卡","C.全部GPU自带独立风扇","D.GPU等同于普通PC显卡"],"answer":"A","explain":"GPU服务器并行计算能力极强，用于训练推理。"},
+{"subject":"技术理论","type":"single","title":"chmod其他用户只读权限？","options":["A.742","B.542","C.442","D.444"],"answer":"D","explain":"4=只读，444所有者、组、其他均仅读权限。"},
+{"subject":"技术理论","type":"single","title":"BMC查看传感器温电压页面？","options":["A.Event Log","B.Dashboard","C.Power Control","D.Sensor Readings"],"answer":"D","explain":"Sensor Readings读取全机温度、电压、风扇传感器数据。"},
+{"subject":"技术理论","type":"single","title":"NF/SA服务器平台定位？","options":["A.四路及以上机架","B.存储专用","C.八路高密度","D.整机柜SmartRack"],"answer":"A","explain":"NF、SA系列多为2/4路机架业务服务器。"},
+{"subject":"技术理论","type":"single","title":"PCIe地址0000:00.07.1 Bus号？","options":["A.0000","B.00","C.07","D.1"],"answer":"B","explain":"格式[域]:Bus:Device.Function，00为Bus编号。"},
+{"subject":"技术理论","type":"single","title":"uKits不支持功能？","options":["A.固件回刷","B.RAID配置","C.BIOS配置","D.操作系统安装"],"answer":"D","explain":"uKits仅硬件固件管理，无系统部署功能。"},
+{"subject":"技术理论","type":"single","title":"客户禁止重启进系统如何收集日志？","options":["A.U盘PE采集","B.远程BMC带外收集","C.InspurDiag本地","D.无法收集"],"answer":"B","explain":"带外BMC无需进系统，远程抓取全量硬件日志。"},
+{"subject":"技术理论","type":"single","title":"RAID阵列状态不含？","options":["A.degrade降级","B.offline离线","C.optimal正常","D.online在线"],"answer":"D","explain":"标准阵列状态：optimal/degraded/offline/failed，无online定义。"},
+{"subject":"技术理论","type":"single","title":"多系统同时运行CPU技术？","options":["A.虚拟化","B.VT虚拟化技术","C.超线程HT","D.VMware软件"],"answer":"B","explain":"BIOS开启VT硬件虚拟化支持虚拟机多系统。"},
+{"subject":"技术理论","type":"single","title":"系统蓝屏错误处理？","options":["A.记录蓝屏代码解析dump日志","B.直接重装系统","C.忽略重启使用"],"answer":"A","explain":"蓝屏优先收集dump日志定位硬件/驱动故障，禁止直接重装系统。"},
+{"subject":"技术理论","type":"single","title":"Linux cd命令含义？","options":["A.切换工作目录","B.媒体播放器","C.新建文件","D.显示文件大小"],"answer":"A","explain":"change directory切换文件夹。"},
+{"subject":"技术理论","type":"single","title":"InManage CLI支持带外批量日志？","options":["A.支持","B.不支持"],"answer":"A","explain":"CLI工具支持批量BMC日志下发采集。"},
+{"subject":"技术理论","type":"single","title":"对数据镜像备份RAID级别？","options":["A.RAID6","B.RAID0","C.RAID5","D.RAID1"],"answer":"D","explain":"RAID1磁盘完全镜像冗余。"},
+{"subject":"技术理论","type":"single","title":"4路服务器型号？","options":["A.NF8260M5","B.NF5280M5","C.NF5280M6","D.NP5570M5"],"answer":"A","explain":"NF8260M5四路高端数据库服务器。"},
+{"subject":"技术理论","type":"single","title":"服务器硬盘槽排序规则？","options":["A.左到右，上到下","B.右到左下到上"],"answer":"A","explain":"浪潮服务器统一盘序：从左至右，从上至下。"},
+{"subject":"技术理论","type":"single","title":"3块500G RAID5替换750G硬盘能否重建？","options":["A.可完整重建","B.重建失败","C.无响应","D.常亮故障灯"],"answer":"A","explain":"RAID5热备/替换盘容量大于等于故障盘即可正常rebuild。"},
+{"subject":"技术理论","type":"single","title":"SAS3008IR卡工具？","options":["A.sas3ircu","B.storcli","C.arcconf","D.Megacli"],"answer":"A","explain":"3008芯片专用管理sas3ircu。"},
+{"subject":"技术理论","type":"single","title":"CPU直接读取数据来源？","options":["A.高速缓存Cache","B.内存RAM","C.硬盘","D.外设"],"answer":"A","explain":"CPU优先读取L1/L2/L3缓存，缓存无数据再访问内存。"},
+{"subject":"技术理论","type":"single","title":"开机无显优先排查？","options":["A.直接换主板","B.硬盘背板链路","C.显示器与视频线","D.立刻提升二线"],"answer":"C","explain":"从简到繁，先排除外接显示设备故障。"},
+{"subject":"技术理论","type":"single","title":"DDR4对比DDR3降低参数？","options":["A.工作电压","B.频率","C.带宽","D.预取"],"answer":"A","explain":"DDR4电压1.2V，DDR3 1.5V，功耗更低。"},
+{"subject":"技术理论","type":"single","title":"电源铜牌/金牌指？","options":["A.转换效率认证","B.线材规格","C.输入电压","D.制造工艺"],"answer":"A","explain":"80PLUS认证，金牌效率高于铜牌。"},
+{"subject":"技术理论","type":"single","title":"NF5180M6最大内存条数？","options":["A.24","B.30","C.28","D.32"],"answer":"D","explain":"单路NF5180M6 32内存插槽。"},
+{"subject":"技术理论","type":"single","title":"单路2U机型型号？","options":["A.SC5212存储","B.NF3280","C.NF3180 1U","D.NF5180双路"],"answer":"B","explain":"NF3280系列单路2U机架服务器。"},
+{"subject":"技术理论","type":"single","title":"主板电源传输部件NF8480M5？","options":["A.电源线","B.数据线","C.信号线","D.电源背板"],"answer":"D","explain":"四路高端机型配备独立电源背板分配供电。"},
+{"subject":"技术理论","type":"single","title":"Linux查看重启日志文件？","options":["A.message","B.syslog","C.cron定时任务"],"answer":"A","explain":"/var/messages记录系统开关机硬件报错。"},
+{"subject":"技术理论","type":"single","title":"开机无显示错误操作？","options":["A.先检查显示器线缆","B.直接更换主板","C.最小化硬件测试"],"answer":"B","explain":"禁止直接更换主板，优先外设、内存、CPU排查。"},
+{"subject":"技术理论","type":"single","title":"PMC RAID卡Legacy快捷键？","options":["A.Ctrl+R LSI","B.Ctrl+H PMC","C.Ctrl+A Intel","D.Ctrl+C"],"answer":"B","explain":"PMC卡开机Ctrl+H进入阵列配置界面。"},
+{"subject":"技术理论","type":"single","title":"NF5280M6电源告警1Hz琥珀闪烁含义？","options":["A.严重故障10Hz","B.预警过热/负载高1Hz","C.正常绿色闪烁"],"answer":"B","explain":"1Hz琥珀：电源预警未宕机；10Hz琥珀：硬件致命故障。"},
+{"subject":"技术理论","type":"single","title":"chmod 611所有者权限？","options":["A.只读4","B.读+写6","C.读执行5","D.仅写2"],"answer":"B","explain":"6=4+2，所有者拥有读写权限。"},
+{"subject":"技术理论","type":"single","title":"双路奇数内存插法？","options":["A.均分剩余插CPU0","B.全部CPU0","C.剩余插CPU1"],"answer":"A","explain":"内存对称优先，多余内存分配至CPU0插槽。"},
+{"subject":"技术理论","type":"single","title":"Expander卡作用？","options":["A.扩展SAS硬盘接口数量","B.供电","C.PCIe信号放大"],"answer":"A","explain":"硬盘扩展卡扩展背板SAS通道，挂载更多磁盘。"},
+// ====================== 文档2 技术理论 多选 ======================
+{"subject":"技术理论","type":"multi","title":"AEP内存描述错误？","options":["A.插标准DIMM槽","B.仅内存模式MM一种模式","C.掉电数据不丢失","D.整机无需搭配普通DRAM"],"answer":"BD","explain":"AEP分MM/AD两种模式，必须搭配常规DRAM内存使用。"},
+{"subject":"技术理论","type":"multi","title":"M7带外一键日志核心分析日志？","options":["A.sensorlist传感器","B.SEL硬件事件","C.IDL故障日志","D.audit审计"],"answer":"ABCD","explain":"四类日志均为故障分析核心素材。"},
+{"subject":"技术理论","type":"multi","title":"BIOS可执行操作？","options":["A.查看CPU内存参数","B.配置RAID阵列","C.设置BMC管理IP"],"answer":"ABC","explain":"BIOS内硬件信息、板载RAID、BMC网络均可配置查看。"},
+{"subject":"技术理论","type":"multi","title":"Linux静态网卡必填字段？","options":["A.IPADDR地址","B.BOOTPROTO协议","C.ONBOOT开机启用","D.NETMASK子网掩码"],"answer":"AD","explain":"静态IP必填IP与子网掩码，BOOTPROTO设static、ONBOOT按需配置。"},
+{"subject":"技术理论","type":"multi","title":"IDL日志严重等级？","options":["A.critical严重","B.info信息","C.warning警告","D.normal正常"],"answer":"ABC","explain":"日志分级无normal，仅严重/警告/信息三类。"},
+{"subject":"技术理论","type":"multi","title":"查看LSI RAID卡日志文件？","options":["A.MgEvtLog","B.storcliAdpalllog"],"answer":"AB","explain":"两类日志记录阵列、硬盘、缓存报错信息。"},
+{"subject":"技术理论","type":"multi","title":"多盘掉线正确处理？","options":["A.先掉线盘强制上线","B.阵列降级先备份数据","C.故障盘全部更换"],"answer":"BC","explain":"禁止后掉线盘优先上线，数据备份为首要步骤。"},
+{"subject":"技术理论","type":"multi","title":"InManage uKits功能？","options":["A.BMC/BIOS/FRU刷新","B.硬件压力测试","C.RAID配置校验"],"answer":"ABC","explain":"工具集覆盖固件、硬件诊断、阵列配置。"},
+{"subject":"技术理论","type":"multi","title":"RAID配置四种方式？","options":["A.Legacy开机配置","B.UEFI BIOS配置","C.BMC远程配置","D.系统命令行配置"],"answer":"ABCD","explain":"四种主流阵列创建途径。"},
+{"subject":"技术理论","type":"multi","title":"可同时双盘冗余RAID？","options":["A.RAID6双校验","B.RAID10镜像条带"],"answer":"AB","explain":"RAID0无冗余，RAID5仅容错单盘；6/10支持两块硬盘损坏。"},
+{"subject":"技术理论","type":"multi","title":"使用条带化RAID级别？","options":["A.RAID0纯条带","B.RAID5分布式条带校验","C.RAID6双校验条带"],"answer":"ABC","explain":"RAID1纯镜像无条带。"},
+{"subject":"技术理论","type":"multi","title":"FRU刷新方式？","options":["A.BMC网页","B.Linux系统IPMITOOL","C.uKits一键工具"],"answer":"ABC","explain":"带外、带内、U盘工具均可刷新FRU资产信息。"},
+{"subject":"技术理论","type":"multi","title":"服务器对比PC优势？","options":["A.高性能","B.高IO","C.远程管理BMC","D.高可靠冗余","E.高可用集群","F.强扩展"],"answer":"ABCDEF","explain":"服务器全部六大核心优势。"},
+{"subject":"技术理论","type":"multi","title":"非LSI RAID卡型号？","options":["A.PM8060 PMC","B.PM8204 PMC"],"answer":["A","B"],"explain":"PM系列属于PMC-Sierra芯片，非Broadcom LSI。"},
+{"subject":"技术理论","type":"multi","title":"RAID操作正确说法？","options":["A.外来磁盘必须清除阵列信息","B.不同型号卡配置不兼容","C.条带大小影响读写性能"],"answer":["A","C"],"explain":"同机箱可混用不同型号RAID卡，仅阵列不能跨卡识别。"},
+{"subject":"技术理论","type":"multi","title":"NVLink GPU互联方式？","options":["A.PCIe总线","B.NVLink高速互联"],"answer":["A","B"],"explain":"NVSwitch属于板载互联硬件，不属于互联协议分类。"},
+{"subject":"技术理论","type":"multi","title":"查看PCIe BUS号方法？","options":["A.BMC设备清单","B.lspci系统命令","C.带内组件日志"],"answer":["A","B","C"],"explain":"lsblk仅识别磁盘块设备，看不到PCI总线。"},
+{"subject":"技术理论","type":"multi","title":"带内日志包含内容？","options":["A.系统messages","B.RAID卡日志","C.寄存器黑盒日志"],"answer":["A","B","C"],"explain":"BMC SEL属于带外日志。"},
+{"subject":"技术理论","type":"multi","title":"RHEL7系统必备分区？","options":["A./boot启动","B.swap交换分区","C./根分区"],"answer":["A","B","C"],"explain":"NTFS Windows格式，UEFI分区仅UEFI启动需要，非必选。"},
+{"subject":"技术理论","type":"multi","title":"BMC标识文字？","options":["A.MGMT管理口","B.IPMI","C.BMC"],"answer":["A","B","C"],"explain":"NIC是普通业务网卡标识，非BMC。"},
+{"subject":"技术理论","type":"multi","title":"SSD固态硬盘优势？","options":["A.读写速度快","B.低噪音低发热","C.抗震抗摔"],"answer":["A","B","C"],"explain":"SSD故障后数据恢复难度远高于机械硬盘。"},
+{"subject":"技术理论","type":"multi","title":"主板跳线功能？","options":["A.清CMOS重置BIOS","B.硬件功能开关","C.模式切换"],"answer":["A","B","C"],"explain":"跳线涵盖清除配置、功能使能、总线模式设置。"},
+{"subject":"技术理论","type":"multi","title":"内存故障现象？","options":["A.开机无显示","B.不定时重启","C.自检卡死"],"answer":["A","B","C"],"explain":"内存不会直接电源硬件报错。"},
+{"subject":"技术理论","type":"multi","title":"CPU故障现象？","options":["A.开机无显","B.死机重启","C.内存/PCIe报错"],"answer":["A","B","C"],"explain":"CPU异常会连锁触发内存、外设自检报错。"},
+{"subject":"技术理论","type":"multi","title":"Windows ipconfig/all查看内容？","options":["A.本机IP","B.子网掩码","C.MAC地址","D.DHCP服务器IP"],"answer":["A","B","C","D"],"explain":"全部信息均可完整展示。"},
+{"subject":"技术理论","type":"multi","title":"硬盘实物可见信息？","options":["A.厂商","B.容量","C.型号SN","D.浪潮PN/QN备件码"],"answer":["A","B","C","D"],"explain":"硬盘标签完整包含以上所有信息。"},
+{"subject":"技术理论","type":"multi","title":"多盘掉线有规律优先排查？","options":["A.硬盘背板","B.SAS线缆","C.RAID卡"],"answer":["A","B","C"],"explain":"多块盘同步故障极少为单块硬盘损坏。"},
+{"subject":"技术理论","type":"multi","title":"支持PCIe接口类型？","options":["A.标准PCIe插槽","B.OCP网卡槽","C.Oculink硬盘接口","D.M.2插槽"],"answer":["A","B","C","D"],"explain":"四类接口底层均为PCIe总线协议。"},
+{"subject":"技术理论","type":"multi","title":"InService支持压缩日志格式？","options":["A.tar","B.tar.gz","C.zip"],"answer":["A","B","C"],"explain":"三种压缩包均可上传解析。"},
+{"subject":"技术理论","type":"multi","title":"清除CMOS方法？","options":["A.短接CLR_CMOS跳线","B.取下主板纽扣电池"],"answer":["A","B"],"explain":"仅断电无法重置BIOS配置，必须短接跳线或拔电池。"},
+{"subject":"技术理论","type":"multi","title":"RAID三大核心技术？","options":["A.镜像冗余","B.条带分片","C.奇偶校验"],"answer":["A","B","C"],"explain":"数据分类不属于阵列核心技术。"},
+{"subject":"技术理论","type":"multi","title":"刷新固件包含类型？","options":["A.BMC","B.BIOS","C.FRU资产","D.RAID卡固件","E.网卡固件"],"answer":["A","B","C","D","E"],"explain":"uKits整机固件一键刷新覆盖全部硬件微码。"},
+{"subject":"技术理论","type":"multi","title":"查看硬盘UUID命令？","options":["A.ll /dev/disk/by-uuid","B.blkid"],"answer":["A","B"],"explain":"fdisk仅查看分区大小，无法读取UUID标识。"},
+{"subject":"技术理论","type":"multi","title":"LSI9361支持阵列？","options":["A.RAID0/1/5/6/10","B.RAID1E"],"answer":["A","B"],"explain":"全系列主流阵列模式全部支持。"},
+{"subject":"技术理论","type":"multi","title":"开机无显排查手段？","options":["A.更换内存CPU最小化测试","B.检查VGA跳线屏蔽","C.核对BIOS与CPU兼容性"],"answer":["A","B","C"],"explain":"最小化硬件是无显故障标准排查流程。"},
+{"subject":"技术理论","type":"multi","title":"CPU散热器螺丝正确操作？","options":["A.禁止触碰针脚","B.定位缺口对齐","C.对角均匀卡扣","D.弯针直接装CPU"],"answer":["A","B","C"],"explain":"针脚弯曲必须修复，禁止直接上机。"},
+{"subject":"技术理论","type":"multi","title":"硬盘状态查询命令？","options":["A.storcliPDList物理盘","B.storcliLdPdInfo逻辑+物理盘"],"answer":["A","B"],"explain":"ValiShowAll非标准阵列查询指令。"},
+{"subject":"技术理论","type":"multi","title":"影响启动顺序BIOS设置？","options":["A.Boot Order启动优先级","B.Secure安全启动"],"answer":["A","B"],"explain":"设备配置、系统时间不影响启动设备选择。"},
+{"subject":"技术理论","type":"multi","title":"风扇噪音大原因？","options":["A.固件策略异常","B.CPU/GPU高负载高温","C.风道积灰","D.风扇硬件损坏"],"answer":["A","B","C","D"],"explain":"软硬件都会导致风扇持续高速异响。"},
+{"subject":"技术理论","type":"multi","title":"系统意外重启排查？","options":["A.收集SEL/messages日志","B.机房供电检测","C.压力测试复现故障"],"answer":["A","B","C"],"explain":"病毒仅软件场景辅助排查，硬件故障优先检测供电温度。"},
+{"subject":"技术理论","type":"multi","title":"网络不通排查手段？","options":["A.直连笔记本测试","B.IP冲突检测","C.网卡硬件更换测试"],"answer":["A","B","C"],"explain":"网络风暴、链路、硬件全部排查维度。"},
+{"subject":"技术理论","type":"multi","title":"Linux查看文件命令？","options":["A.cat全量","B.more分页","C.less前后翻页搜索","D.vi编辑器查看"],"answer":["A","B","C","D"],"explain":"四款工具均可读取文本文件。"},
+{"subject":"技术理论","type":"multi","title":"3008卡sashbalog日志内容？","options":["A.卡型号","B.阵列序列","C.物理硬盘信息"],"answer":["A","B","C"],"explain":"日志完整记录RAID卡与挂载磁盘状态。"},
+{"subject":"技术理论","type":"multi","title":"硬盘热备盘最低容量？","options":["A.阵列单盘500G，热备盘≥500G","B.600G可用","C.300/400G过小不可"],"answer":["A","C"],"explain":"热备盘容量必须大于等于阵列内最大硬盘容量。"},
+{"subject":"技术理论","type":"multi","title":"常见内存厂商？","options":["A.镁光Micron","B.海力士SK","C.记忆科技Ramaxel","D.三星Samsung"],"answer":["A","B","C","D"],"explain":"四大主流服务器内存原厂。"},
+{"subject":"技术理论","type":"multi","title":"常见硬盘厂商？","options":["A.希捷","B.西数/日立","C.三星","D.镁光SSD"],"answer":["A","B","C","D"],"explain":"机械盘+SSD全部主流厂商。"},
+{"subject":"技术理论","type":"multi","title":"BMC无法连接排查？","options":["A.上电等待2分钟初始化","B.检查网线MAC地址","C.长按UID复位BMC","D.同网段IP配置","E.BIOS查看BMC IP"],"answer":["A","B","C","D","E"],"explain":"全套BMC网络故障排查流程。"},
+{"subject":"技术理论","type":"multi","title":"更换主板识别方向标识？","options":["A.IPMI MGMT口","B.VGA视频口","C.USB","D.电源插槽"],"answer":["A","B","C","D"],"explain":"接口布局可快速区分主板正反。"},
+{"subject":"技术理论","type":"multi","title":"LSI9361热备类型？","options":["A.全局热备整阵列通用","B.局部热备单阵列专用"],"answer":["A","B"],"explain":"仅两种热备配置模式。"},
+{"subject":"技术理论","type":"multi","title":"NF8480M5描述正确？","options":["A.前置最大24盘位","B.主板直连电源背板","C.M4/M5架构相似","D.M5四路旗舰机型"],"answer":["A","B","C","D"],"explain":"全部描述符合产品规格。"},
+{"subject":"技术理论","type":"multi","title":"磁盘读写慢排查？","options":["A.病毒占用IO","B.业务负载过高","C.PE基准测速对比","D.背板/RAID硬件故障"],"answer":["A","B","C","D"],"explain":"软硬件、负载、硬件多维度排查IO性能。"},
+{"subject":"技术理论","type":"multi","title":"带外一键日志文件夹构成？","options":["A.log事件日志","B.runningdata传感器数据","C.Component硬件清单"],"answer":["B","C"],"explain":"message属于系统带内日志，不在BMC一键导出包内。"},
+{"subject":"技术理论","type":"multi","title":"虚拟化优势？","options":["A.硬件资源复用降成本","B.动态调度资源","C.整合服务器减少硬件数量"],"answer":["A","B","C"],"explain":"虚拟化三大核心业务价值。"},
+{"subject":"技术理论","type":"multi","title":"BMC网页功能？","options":["A.查看BIOS/BMC版本","B.远程配置RAID","C.刷新固件","D.修改管理IP"],"answer":["A","B","C","D"],"explain":"全套远程硬件管理功能。"},
+{"subject":"技术理论","type":"multi","title":"单盘掉线正确操作？","options":["A.确认故障SN槽位","B.客户签署数据免责","C.更换后等待阵列重建"],"answer":["A","B","C"],"explain":"单盘掉线不可强制上线，直接热插拔更换。"},
+{"subject":"技术理论","type":"multi","title":"GPU服务器型号？","options":["A.NF5288M5","B.NF5568M4","C.NF5588M5"],"answer":["A","B","C"],"explain":"三款均为多卡AI GPU机型。"},
+{"subject":"技术理论","type":"multi","title":"常见RAID卡品牌？","options":["A.LSI/Broadcom","B.Adaptec","C.Inspur自研"],"answer":["A","B","C"],"explain":"Qlogic主流HBA卡，不做RAID阵列卡。"},
+{"subject":"技术理论","type":"multi","title":"本地PC直连服务器ping不通？","options":["A.网卡无IP不同网段","B.系统防火墙拦截ICMP","C.未安装网卡驱动"],"answer":["B","C"],"explain":"网卡固件不影响基础连通性。"},
+{"subject":"技术理论","type":"multi","title":"最小化测试硬件？","options":["A.单CPU+基础内存","B.主板电源","C.移除多余板卡线缆"],"answer":["A","B","C"],"explain":"最小化隔离故障标准方法。"},
+{"subject":"技术理论","type":"multi","title":"PE系统作用？","options":["A.排除系统软件故障","B.硬件独立测试"],"answer":["A","B"],"explain":"PE独立预安装系统，脱离硬盘OS测试硬件。"},
+{"subject":"技术理论","type":"judge","title":"BIOS软件，CMOS存储硬件配置，二者不同。","options":["A.正确","B.错误"],"answer":"A","explain":"BIOS固件程序；CMOS主板电池存储配置参数。"},
+{"subject":"技术理论","type":"judge","title":"内存插法可在知识库/用户手册查询。","options":["A.正确","B.错误"],"answer":"A","explain":"各机型内存对称插法文档统一归档知识库。"},
+{"subject":"技术理论","type":"judge","title":"BMC Event Log记录全部用户登录日志。","options":["A.正确","B.错误"],"answer":"B","explain":"审计audit日志记录登录行为，Event Log仅硬件告警。"},
+{"subject":"技术理论","type":"judge","title":"高密度单节点故障其余节点正常运行。","options":["A.正确","B.错误"],"answer":"A","explain":"多节点机箱各节点硬件独立，互不影响。"},
+{"subject":"技术理论","type":"judge","title":"M5刷新BMC建议不保留配置，MAC地址不会丢失。","options":["A.正确","B.错误"],"answer":"A","explain":"M5机型BMC刷新清除配置不会覆盖网卡硬件MAC地址。"}
+];
+
+// 本地存储数据
+let wrongList = JSON.parse(localStorage.getItem('wrong')) || [];
+let collectList = JSON.parse(localStorage.getItem('collect')) || [];
+let answerRecord = JSON.parse(localStorage.getItem('record')) || [];
+let curIdx = 0;
+let filterType = 'all';
+let currentQList = [];
+
+// 渲染题目
+function render(){
+    // 筛选题库
+    if(filterType === 'all'){
+        currentQList = [...questionList];
+    }else if(filterType === 'wrong'){
+        currentQList = [...wrongList];
+    }else{
+        currentQList = questionList.filter(q=>q.type === filterType);
+    }
+    document.getElementById('totalNum').innerText = currentQList.length;
+    const qWrap = document.getElementById('qTitle');
+    const optWrap = document.getElementById('optWrap');
+    const ansBox = document.getElementById('ansBox');
+    ansBox.style.display = 'none';
+    if(currentQList.length === 0){
+        qWrap.innerText = "当前分类暂无题目";
+        optWrap.innerHTML = "";
+        return;
+    }
+    if(curIdx >= currentQList.length) curIdx = 0;
+    const q = currentQList[curIdx];
+    document.getElementById('curNum').innerText = curIdx + 1;
+    qWrap.innerText = `【${q.subject}】${q.title}`;
+    // 渲染选项
+    let optHtml = "";
+    q.options.forEach(item=>{
+        optHtml += `<div class="opt-item" data-val="${item[0]}">${item}</div>`;
+    })
+    optWrap.innerHTML = optHtml;
+    // 绑定点击选项事件
+    document.querySelectorAll('.opt-item').forEach(el=>{
+        el.onclick = ()=>{
+            document.querySelectorAll('.opt-item').forEach(o=>o.classList.remove('opt-select'));
+            el.classList.add('opt-select');
+            el.dataset.select = el.dataset.val;
+        }
+    })
+    // 计算正确率
+    let rightCnt = answerRecord.filter(r=>r.right).length;
+    let allCnt = answerRecord.length;
+    let rate = allCnt > 0 ? Math.round(rightCnt / allCnt * 100) : 0;
+    document.getElementById('rate').innerText = rate + "%";
+}
+
+// 提交答案
+document.getElementById('submitBtn').addEventListener('click',()=>{
+    const sel = document.querySelector('.opt-item[data-select]');
+    if(!sel){
+        alert("请先选择一个选项！");
+        return;
+    }
+    const selVal = sel.dataset.select;
+    const q = currentQList[curIdx];
+    const ansBox = document.getElementById('ansBox');
+    document.getElementById('trueAns').innerText = q.answer;
+    document.getElementById('explain').innerText = q.explain;
+    ansBox.style.display = 'block';
+    // 标红/绿
+    document.querySelectorAll('.opt-item').forEach(el=>{
+        const v = el.dataset.val;
+        if(v === q.answer){
+            el.classList.add('opt-right');
+        }else if(v === selVal && v !== q.answer){
+            el.classList.add('opt-wrong');
+        }
+    })
+    // 记录作答
+    const isRight = selVal === q.answer;
+    answerRecord.push({title:q.title,right:isRight});
+    localStorage.setItem('record',JSON.stringify(answerRecord));
+    // 存入错题本
+    if(!isRight){
+        const exist = wrongList.some(w=>w.title === q.title);
+        if(!exist) wrongList.push(q);
+        localStorage.setItem('wrong',JSON.stringify(wrongList));
+    }
+})
+
+// 下一题
+document.getElementById('nextBtn').addEventListener('click',()=>{
+    curIdx++;
+    render();
+})
+
+// 切换分类按钮
+document.querySelectorAll('.nav button[data-filter]').forEach(btn=>{
+    btn.onclick = function(){
+        document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+        this.classList.add('active');
+        filterType = this.dataset.filter;
+        curIdx = 0;
+        render();
+    }
+})
+
+// 收藏题目
+function collectQ(){
+    const q = currentQList[curIdx];
+    const exist = collectList.some(c=>c.title === q.title);
+    if(!exist){
+        collectList.push(q);
+        localStorage.setItem('collect',JSON.stringify(collectList));
+        alert("收藏成功！");
+    }else{
+        alert("该题已收藏");
+    }
+}
+
+// 错题本
+function openWrongBook(){
+    filterType = 'wrong';
+    curIdx = 0;
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    render();
+}
+
+// 模拟测试弹窗
+function mockExam(){
+    alert("模拟测试功能待完善，可先使用分类刷题巩固知识点");
+}
+
+// 页面初始化
+render();
+</script>
+</body>
+</html>
